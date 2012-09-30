@@ -9,7 +9,7 @@ Processing Libraries:
 JavaCVPro 0.4 Beta
 Simple OpenNI v2.7
 
-Run main_processing_v3.pde and press any key to quit.
-log.txt generated should be placed in graphGen folder.
-Run graphGen.pde to display the result. 
-Char 'choice' in graphGen.pde can be changed to display various results.
+1. Run main_processing_v3.pde and press any key to quit.
+2. log.txt generated should be placed in graphGen folder and renamed to 'log2.txt'. (Missed this, will update in future release!)
+3. Run graphGen.pde to display the result. 
+4. Char 'choice' in graphGen.pde can be changed to display various results.
