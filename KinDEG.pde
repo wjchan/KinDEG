@@ -108,7 +108,7 @@ void timeStamp(){
     lis = new String[newIndex];
   }
   
-  toSave = (y + "-" + mon + "-" + d + "-" + h + "-" + m + "-" + sec) + " ";
+  toSave = (y + "-" + mon + "-" + d + "-" + h + "-" + m + "-" + sec) + "-";
   toSave = toSave + str(counter);
   lis[newIndex-1] = toSave;
   

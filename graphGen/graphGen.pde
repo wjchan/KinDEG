@@ -3,13 +3,15 @@ int leftMargin = 30;
 int topMargin = 100;
 int plotHeight = 250;
 float timer = 0.0;
-PFont helvetica;
+PFont comicSans;
+char choice = 'd';
+
 
 void setup(){
-  size(1280, 480);
+  size(640, 480);
   smooth();
-  helvetica = createFont("Helvetica-Bold", 14);
-  textFont(helvetica);
+  comicSans = createFont("Comic Sans MS", 15);
+  textFont(comicSans);
   
   // set plot size
   plotX1 = leftMargin;
@@ -62,6 +64,11 @@ class timeEl{
      return 0;      
    }
    
+   String printDate(){
+     println((str(d) + "/" + str(mon) + "/" + str(y)));
+     return (str(d) + "/" + str(mon) + "/" + str(y));    
+   }
+   
    int gety(){
      return y;
    }
@@ -72,12 +79,14 @@ class timeEl{
 
 void draw(){
   //data generator
-  String log2lines[] = loadStrings("log2.txt");
+  String log2lines[] = loadStrings("log.txt");
   println("there are " + log2lines.length + " lines");
   ArrayList dateList=new ArrayList();
   ArrayList xaxis = new ArrayList();
   ArrayList yaxis = new ArrayList();
-  char choice = 'y';
+  ArrayList tokenArray = new ArrayList();
+  
+  
 
   //checked
   for (int i =0 ; i < log2lines.length; i++) 
@@ -155,6 +164,7 @@ void draw(){
             dates.add(temp);
             xaxis.add(token);
             yaxis.add(temp.pplNum);   
+            tokenArray.add(temp);
           }
           else{//if date has appeared
           //assuming chronological order, token is index
@@ -259,11 +269,39 @@ void draw(){
       fill(0);
       ellipse(x, y, 8, 8);
       
-      int labelVal = round(arry[i]);
+      int labelVal = arry[i];
       Label label = new Label("" + labelVal, x, y);
-      //Label label2 = new Label("haha",x-10,y-10);
+      if (choice != 'd'){
+        Label label2 = new Label(str(arrx[i]),x,y-30);
+      }
+      else{
+        timeEl tempTimeEl = (timeEl)tokenArray.get(i);
+        Label label2 = new Label(tempTimeEl.printDate(),x,y-30);
+      }
+      
+
     }
   }
+  fill(0, 123, 200);
+  text("Number of visitors", width/2-49, 30); 
+  switch (choice){
+    case 'y':
+      text("By year", width/2-20, 50); 
+      break;
+    case 'm':
+      text("By month", width/2-20, 50); 
+      break;
+    case 'd':
+      text("By day", width/2-20, 50); 
+      break;
+    case 'h':
+      text("By hour", width/2-20, 50); 
+      break;
+    default:
+      text("By year", width/2-20, 50); 
+      break;
+  }
+    
   
   
   ///////////////////////////////////////////////////////////////////
@@ -326,4 +364,5 @@ int[] intArrayList2Array(ArrayList lis){
   }
   return arr;
 }
+
 

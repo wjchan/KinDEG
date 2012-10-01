@@ -19,5 +19,6 @@ class Label {
     // draw text
     fill(255);
     text(txt, x+15, y-15);
+
   }
 }
