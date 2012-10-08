@@ -1,0 +1,19 @@
+v0.1 (INITIAL COMMIT) #30-9-2012
+
+-Number of people counter
+-Log file generator
+-Statistic generator using information from log file
+
+Features in progress:
+-OpenCV face tracking information to be utilized to improve display
+gauge performance
+-Better UI
+-Better file and code management
+
+
+v0.2 #8-10-2012
+
+-Autocalibration is applied
+-Only visitors that gazed exceeding a threshold amount of time is counted
+-Head position is used for tracking purposes instead of centre of mass
+-Gaze estimation implemented using a combination of JavaCVPro face detection and head joint position
