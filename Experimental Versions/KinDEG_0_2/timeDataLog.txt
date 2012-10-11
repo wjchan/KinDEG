@@ -1,0 +1,3 @@
+TotalVisits	11
+TotalGazeTime	22000
+AverageTime	2000
