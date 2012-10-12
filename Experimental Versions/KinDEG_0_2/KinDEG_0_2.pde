@@ -10,6 +10,9 @@
 import SimpleOpenNI.*;
 import monclubelec.javacvPro.*;
 import java.awt.*; 
+import processing.serial.*;
+public static final char HEADER = '|';
+public static final char MOUSE  = 'M';
 
 
 Rectangle[] faceRect;
@@ -31,11 +34,16 @@ HashMap userDurationMap = new HashMap(); //dynamically updating
 ArrayList gazeTimeAr =  new ArrayList(); //update = growing only
 ArrayList presenceAr = new ArrayList();
 ArrayList ratioAr = new ArrayList();
+Serial myPort;
+int timerStart=millis();
 
 void setup()
 {
   kinect = new SimpleOpenNI(this);
   counter = 0;
+  String portName = Serial.list()[0];
+  //println(portName);
+  myPort = new Serial(this, portName, 9600);
    
   // enable depthMap generation 
   
@@ -91,8 +99,13 @@ void draw()
   {
     if(kinect.isTrackingSkeleton(userList[i]))
     {
+      
       drawSkeleton(userList[i]);
       float[] coord = getHeadCoord(userList[i]);
+      
+      if (i==0){//first person
+      sendMessage(MOUSE, int(coord[0]), int(coord[1]));
+      }
       
       if (coord[2]>0.5) //if confidence > 0.5
       {     
@@ -228,10 +241,63 @@ void keyPressed(){
   
   //extract stuff
   
+    String timeData[] = loadStrings(timeDataLog);
   
-
+    String[] Els = split(timeData[0], '\t');
+    int totalVisitsToDate = parseInt(Els[1]); //get total visits
+    
+    Els = split(timeData[1], '\t');
+    int totalGazeTimeToDate = parseInt(Els[1]);//get total gaze time
+    
+    Els = split(timeData[2], '\t');
+    int avgGazeTimeToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[3], '\t');
+    int maxGazeTimeToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[4], '\t');
+    int totalPresenceToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[5], '\t');
+    int avgPresenceToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[6], '\t');
+    int maxPresenceToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[7], '\t');
+    int maxRatioGazePToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[8], '\t');
+    int ratioGazePresToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[9], '\t');
+    int avgRatioGazePToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[10], '\t');
+    int totalRunTimeToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[11], '\t');
+    int totalPassersToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[12], '\t');
+    int maxUser1TimeToDate = parseInt(Els[1]);  //get average time
   
+  //
+    totalRunTime = totalRunTime + totalRunTimeToDate;
+    totalVisits = totalVisits + threshNumPpl;
+    totalPassers = totalPassers + counter;    
+    maxUser1Time = max(maxUser1Time, maxUser1TimeToDate);
+    totalGazeTime = totalGazeTime + totalGazeTimeToDate;
+    avgGazeTime = totalGazeTime/totalVisits;
+    maxGazeTime = max(maxGazeTime, maxGazeTimeToDate);
+    totalPresence = totalPresence + totalPresenceToDate;
+    avgPresence = totalPresence/totalVisits;
+    maxPresence = max(maxPresence, maxPresenceToDate);
+    maxRatioGazeP = max(maxRatioGazeP, maxRatioGazePToDate);
+    avgRatioGazeP = totalGazeTime/totalPresence;
+    ratioGazePres = avgRatioGazeP*totalVisits/totalVisits;
   
+  //
   
   
   
@@ -301,34 +367,32 @@ void readTimeDate(){
   int maxGazeTimeToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[4], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int totalPresenceToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[5], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int avgPresenceToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[6], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int maxPresenceToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[7], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int maxRatioGazePToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[8], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int ratioGazePresToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[9], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int avgRatioGazePToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[10], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int totalRunTimeToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[11], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int totalPassersToDate = parseInt(Els[1]);  //get average time
   
   Els = split(timeData[12], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
+  int maxUser1TimeToDate = parseInt(Els[1]);  //get average time
   
-  Els = split(timeData[13], '\t');
-  int averageToDate = parseInt(Els[1]);  //get average time
   
   //sadsdf
   
@@ -343,5 +407,36 @@ void timeDataInc(int userGazeTime){
 
 void recordGaze(user target)
 {
+  
+}
+
+
+void serialEvent(Serial p){
+  //handle incoming data
+  String inString = myPort.readStringUntil('\n');
+  if (inString != null){
+    println(inString); //echo text string from Arduino
+  }
+}
+
+void sendMessage(char tag, int valueX, int valueY){
+  if (millis() - timerStart > 10){
+  myPort.write(HEADER);
+  myPort.write(tag);
+
+  char c = (char)(valueX / 256); // msb
+  myPort.write(c);
+  c = (char)(valueX & 0xff);  // lsb
+  myPort.write(c);
+  
+  
+  char d = (char)(valueY / 256); // msb
+  myPort.write(d);
+  d = (char)(valueY & 0xff);  // lsb
+  myPort.write(d);
+  timerStart = millis();
+  }
+  
+  
   
 }

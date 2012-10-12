@@ -5,8 +5,8 @@
 class user{
     //details from log
    int id;
-   float gazeTime;
-   float startGaze;
+   int gazeTime;
+   int startGaze;
    boolean inRect;
    int enterTime;
    
@@ -32,7 +32,7 @@ class user{
      int tempInt = millis();
      return (gazeTime/(tempInt - enterTime));
    }
-   float getDuration(){
+   int getDuration(){
      return (millis() - enterTime);
    }
 }
