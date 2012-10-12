@@ -215,13 +215,19 @@ void keyPressed(){
   
   if (totalVisits != 0)
   {
+    
   //declare variables
-    totalGazeTime = int(sumFloatAL(gazeTimeAr));
-    avgGazeTime = totalGazeTime/totalVisits;
-    maxGazeTime = int(maxFloatAL(gazeTimeAr));  
-    totalPresence = int(sumFloatAL(presenceAr));
+    totalGazeTime = int(sumIntAL(gazeTimeAr));
+    
+    //just to get division correct
+    avgGazeTime = totalGazeTime;
+    avgGazeTime = avgGazeTime/totalVisits;
+    
+    maxGazeTime = int(maxIntAL(gazeTimeAr));  
+    totalPresence = int(sumIntAL(presenceAr));
+
     avgPresence = totalPresence/totalVisits;
-    maxPresence = int(maxFloatAL(presenceAr));
+    maxPresence = int(maxIntAL(presenceAr));
     maxRatioGazeP = maxFloatAL(ratioAr);
     ratioGazePres = sumFloatAL(ratioAr)/totalVisits;
     avgRatioGazeP = totalGazeTime/totalVisits;
@@ -265,13 +271,13 @@ void keyPressed(){
     int maxPresenceToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[7], '\t');
-    int maxRatioGazePToDate = parseInt(Els[1]);  //get average time
+    float maxRatioGazePToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[8], '\t');
-    int ratioGazePresToDate = parseInt(Els[1]);  //get average time
+    float ratioGazePresToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[9], '\t');
-    int avgRatioGazePToDate = parseInt(Els[1]);  //get average time
+    float avgRatioGazePToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[10], '\t');
     int totalRunTimeToDate = parseInt(Els[1]);  //get average time
@@ -284,8 +290,8 @@ void keyPressed(){
   
   //
     totalRunTime = totalRunTime + totalRunTimeToDate;
-    totalVisits = totalVisits + threshNumPpl;
-    totalPassers = totalPassers + counter;    
+    totalVisits = totalVisits + totalVisitsToDate;
+    totalPassers = totalPassers + totalPassersToDate;    
     maxUser1Time = max(maxUser1Time, maxUser1TimeToDate);
     totalGazeTime = totalGazeTime + totalGazeTimeToDate;
     avgGazeTime = totalGazeTime/totalVisits;
@@ -299,7 +305,36 @@ void keyPressed(){
   
   //
   
+  //turn everything to string
+  String[] statData = new String[13];
+  String a1 = "TotalVisits\t" + str(totalVisits);
+  statData[0] = a1;
+  a1 = "TotalGazeTime\t"+str(totalGazeTime);
+  statData[1] = a1;
+  a1 = "AvgGazeTime\t"+str(avgGazeTime);
+  statData[2] = a1;
+  a1 = "MaxGazeTime\t"+str(maxGazeTime);
+  statData[3] = a1;
+  a1 = "TotalPresence\t"+str(totalPresence);
+  statData[4] = a1;
+  a1 = "AvgPresence\t"+str(avgPresence);
+  statData[5] = a1;
+  a1 = "MaxPresence\t"+str(maxPresence);
+  statData[6] = a1;
+  a1 = "MaxRatioGazeP\t"+str(maxRatioGazeP);
+  statData[7] = a1;
+    a1 = "RatioGazePres\t"+str(ratioGazePres);
+  statData[8] = a1;
+    a1 = "AvgRatioGazeP\t"+str(avgRatioGazeP);
+  statData[9] = a1;
+    a1 = "TotalRunTime\t"+str(totalRunTime);
+  statData[10] = a1;
+      a1 = "TotalPassers\t"+str(totalPassers);
+  statData[11] = a1;
+    a1 = "maxUser1Time\t"+str(maxUser1Time);
+  statData[12] = a1;
   
+  saveStrings(timeDataLog, statData);
   
   
   
