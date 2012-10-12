@@ -211,6 +211,7 @@ void keyPressed(){
   float maxRatioGazeP;
   float ratioGazePres;
   float avgRatioGazeP;
+  float totalRatio;
   
   
   if (totalVisits != 0)
@@ -226,11 +227,13 @@ void keyPressed(){
     maxGazeTime = int(maxIntAL(gazeTimeAr));  
     totalPresence = int(sumIntAL(presenceAr));
 
-    avgPresence = totalPresence/totalVisits;
+    avgPresence = totalPresence/1.0;
+    avgPresence = avgPresence/totalVisits;
     maxPresence = int(maxIntAL(presenceAr));
     maxRatioGazeP = maxFloatAL(ratioAr);
     ratioGazePres = sumFloatAL(ratioAr)/totalVisits;
     avgRatioGazeP = totalGazeTime/totalVisits;
+    totalRatio = sumFloatAL(ratioAr);
 
   }
   else{
@@ -243,6 +246,7 @@ void keyPressed(){
     maxRatioGazeP = 0;
     ratioGazePres =0;
     avgRatioGazeP =0;
+    totalRatio = 0;
   }
   
   //extract stuff
@@ -287,6 +291,9 @@ void keyPressed(){
     
     Els = split(timeData[12], '\t');
     int maxUser1TimeToDate = parseInt(Els[1]);  //get average time
+    
+    Els = split(timeData[12], '\t');
+    float totalRatioToDate = parseFloat(Els[1]);  //get average time
   
   //
     totalRunTime = totalRunTime + totalRunTimeToDate;
@@ -300,13 +307,19 @@ void keyPressed(){
     avgPresence = totalPresence/totalVisits;
     maxPresence = max(maxPresence, maxPresenceToDate);
     maxRatioGazeP = max(maxRatioGazeP, maxRatioGazePToDate);
-    avgRatioGazeP = totalGazeTime/totalPresence;
-    ratioGazePres = avgRatioGazeP*totalVisits/totalVisits;
+    
+    avgRatioGazeP = totalGazeTime;
+    avgRatioGazeP = avgRatioGazeP/totalPresence;
+    
+    totalRatio = totalRatio + totalRatioToDate;
+    ratioGazePres = totalRatio;
+    ratioGazePres = ratioGazePres/totalVisits;
+    
   
   //
   
   //turn everything to string
-  String[] statData = new String[13];
+  String[] statData = new String[14];
   String a1 = "TotalVisits\t" + str(totalVisits);
   statData[0] = a1;
   a1 = "TotalGazeTime\t"+str(totalGazeTime);
@@ -333,6 +346,8 @@ void keyPressed(){
   statData[11] = a1;
     a1 = "maxUser1Time\t"+str(maxUser1Time);
   statData[12] = a1;
+    a1 = "totalRatio\t"+str(totalRatio);
+  statData[13] = a1;
   
   saveStrings(timeDataLog, statData);
   

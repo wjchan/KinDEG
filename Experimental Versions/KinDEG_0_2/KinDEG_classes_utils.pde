@@ -29,8 +29,10 @@ class user{
    }
    
    float getRatio(){
-     int tempInt = millis();
-     return (gazeTime/(tempInt - enterTime));
+     int tempInt = millis()-enterTime;
+     float tempF = gazeTime;
+     tempF = tempF/tempInt;
+     return tempF;
    }
    int getDuration(){
      return (millis() - enterTime);
