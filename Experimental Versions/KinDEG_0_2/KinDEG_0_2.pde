@@ -74,7 +74,7 @@ void draw()
   kinect.update();
    opencv.copy(kinect.rgbImage());
   
-  image(kinect.rgbImage(),0,0);
+  image(kinect.depthImage(),0,0);
   
   // draw the skeleton if it's available
   int[] userList = kinect.getUsers();
@@ -178,24 +178,55 @@ void keyPressed(){
     }
   }
   
+  
+  
   //LOG STUFF
   //declare variables
-  int totalVisits = threshNumPpl;
-  //int totalGazeTime = //go through array to sum all gaze time
-  //int avgGazeTime = totalGazeTime/totalVisits;
-  //int maxGazeTime = //go through array to find max
-  //int totalPresence = //go through array to sum all presence time
-  //int avgPresence = totalPresence/totalVisits;
-  //int maxPresence = //go through array to find max
-  //float maxRatioGazeP = //go through array to find max
-  //float ratioGazePres = //sum all ratio then divide by totalVisits
-  //float avgRatioGazeP = totalGazeTime/totalVisits;
   int totalRunTime = millis();
+  int totalVisits = threshNumPpl;
   int totalPassers = counter;
   int maxUser1Time = maxUserNum;
   
   
   
+  int totalGazeTime;
+  float avgGazeTime;
+  int maxGazeTime;  
+  int totalPresence;
+  float avgPresence;
+  int maxPresence;
+  float maxRatioGazeP;
+  float ratioGazePres;
+  float avgRatioGazeP;
+  
+  
+  if (totalVisits != 0)
+  {
+  //declare variables
+    totalGazeTime = int(sumFloatAL(gazeTimeAr));
+    avgGazeTime = totalGazeTime/totalVisits;
+    maxGazeTime = int(maxFloatAL(gazeTimeAr));  
+    totalPresence = int(sumFloatAL(presenceAr));
+    avgPresence = totalPresence/totalVisits;
+    maxPresence = int(maxFloatAL(presenceAr));
+    maxRatioGazeP = maxFloatAL(ratioAr);
+    ratioGazePres = sumFloatAL(ratioAr)/totalVisits;
+    avgRatioGazeP = totalGazeTime/totalVisits;
+
+  }
+  else{
+    totalGazeTime = 0;
+    avgGazeTime = 0;
+    maxGazeTime =0;
+    totalPresence =0;
+    avgPresence =0;
+    maxPresence=0;
+    maxRatioGazeP = 0;
+    ratioGazePres =0;
+    avgRatioGazeP =0;
+  }
+  
+  //extract stuff
   
   
 
@@ -208,7 +239,7 @@ void keyPressed(){
   
   
   
-  
+  ///////////////////////////////////////////////
   if (userMap.isEmpty() == false)
   {
     println("not all user deleted, something is not right here");
@@ -264,6 +295,39 @@ void readTimeDate(){
   int totalGazeTimeToDate = parseInt(Els[1]);//get total gaze time
   
   Els = split(timeData[2], '\t');
+  int avgGazeTimeToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[3], '\t');
+  int maxGazeTimeToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[4], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[5], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[6], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[7], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[8], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[9], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[10], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[11], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[12], '\t');
+  int averageToDate = parseInt(Els[1]);  //get average time
+  
+  Els = split(timeData[13], '\t');
   int averageToDate = parseInt(Els[1]);  //get average time
   
   //sadsdf

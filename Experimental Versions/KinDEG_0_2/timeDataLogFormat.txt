@@ -1,6 +1,6 @@
-TotalVisits	11		//total number of presence recorded = total number of gazes recorded = total ratio recorded
-TotalGazeTime	22000		//total gaze time
-AvgGazeTime	2000		//avg gaze time 		(total gaze time/ number of gazes recorded)
+TotalVisits			//total number of presence recorded = total number of gazes recorded = total ratio recorded
+TotalGazeTime			//total gaze time
+AvgGazeTime			//avg gaze time 		(total gaze time/ number of gazes recorded)
 MaxGazeTime			//max(gaze time)
 TotalPresence			//total presence time		
 AvgPresence			//avg presence time		(total presence/total number of presence recorded)

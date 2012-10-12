@@ -232,6 +232,16 @@ void onEndPose(String pose,int userId)
 }
 
 
+void mousePressed()
+{
+  int[] depthValues = kinect.depthMap();
+  int clickPosition = mouseX+(mouseY*640);
+  int millimeters = depthValues[clickPosition];
+  float inches = millimeters/25.4;
+  println("mm: " + millimeters + " in: "+inches);
+}
+
+
 //custom function
 void timeStamp(){
   int y = year();
@@ -294,6 +304,52 @@ boolean isHeadInRect(float x, float y, Rectangle[] fRect){
 }
 
 
+float sumFloatAL(ArrayList lis) //sum up all elements of float arrayList
+{ 
+  float sum = 0;
+  for (int i=0; i<lis.size(); i++)
+  {
+    float y = (Float)lis.get(i);
+    sum = sum + y;
+  }
+  return sum;
+}
 
+float maxFloatAL(ArrayList lis) //sum up all elements of float arrayList
+{ 
+  float maxNum = 0;
+  for (int i=0; i<lis.size(); i++)
+  {
+    float y = (Float)lis.get(i);
+    if (y>maxNum){
+      maxNum = y;
+    }
+  }
+  return maxNum;
+}
+
+int sumIntAL(ArrayList lis) //sum up all elements of float arrayList
+{ 
+  int sum = 0;
+  for (int i=0; i<lis.size(); i++)
+  {
+    int y = (Integer)lis.get(i);
+    sum = sum + y;
+  }
+  return sum;
+}
+
+float maxIntAL(ArrayList lis) //sum up all elements of float arrayList
+{ 
+  int maxNum = 0;
+  for (int i=0; i<lis.size(); i++)
+  {
+    int y = (Integer)lis.get(i);
+    if (y>maxNum){
+      maxNum = y;
+    }
+  }
+  return maxNum;
+}
 
 
