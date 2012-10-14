@@ -21,7 +21,7 @@ void setup()
 { 
   Serial.begin(9600);
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object 
-  //myservo.write(20); //default angle
+  myservo.write(20); //default angle
   myservo2.attach(10);
   myservo3.attach(11);
   myservo4.attach(6);
@@ -63,7 +63,7 @@ void loop()
       }
         myservo.write(int(angle));
         myservo3.write(int(angle));
-        float angle2 = map(valY, 0, 480,70 , 180);
+        float angle2 = map(valY, 0, 480,0 , 140);
         myservo2.write(int(angle2));
         myservo4.write(int(angle2));
         slowSweep(prevAngle, angle);

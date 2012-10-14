@@ -3,6 +3,10 @@
   Author: Wei Jian Chan
  */
 
+
+//half implemented - timeDataLog (average value for each param)
+//starting implementing maxppl - maxUserList (ie max number of user at a time)
+
 import SimpleOpenNI.*;
 import monclubelec.javacvPro.*;
 import java.awt.*; 
@@ -16,42 +20,30 @@ OpenCV opencv;
 SimpleOpenNI  kinect;
 boolean autoCalib=true;
 int UID;
-
-
+float headx, heady, neckx, necky;
+String logName = "log.txt";
 int msElapsed = 0;
 int counter;
 HashMap userMap = new HashMap();
 int timeThresh = 2000; //2000ms = 2s
 int threshNumPpl=0; //number of people counted using threshold method
+int timeAverage, timeAverageNumPpl, timeAverageTotalTime;
+String timeDataLog = "timeDataLog.txt";
 int maxUserNum = 0;
 HashMap userDurationMap = new HashMap(); //dynamically updating
 ArrayList gazeTimeAr =  new ArrayList(); //update = growing only
 ArrayList presenceAr = new ArrayList();
 ArrayList ratioAr = new ArrayList();
-Serial myPort;
-boolean serialEnabled=true;
-
-//log names
-String timeDataLog = "timeDataLog.txt";
-String logTxt = "log.txt";
-
-
-//timers
-timer timerSerialSend = new timer(10); //10 ms stopwatch
-timer timerLog = new timer(60000); //1 minute stopwatch
+//Serial myPort;
+int timerStart=millis();
 
 void setup()
 {
   kinect = new SimpleOpenNI(this);
   counter = 0;
-  if (serialEnabled)
-  {
-    String portName = Serial.list()[0];
-    myPort = new Serial(this, portName, 9600);
-  }
-  
-  //kinect.moveKinect(5);
-  
+ // String portName = Serial.list()[0];
+  //println(portName);
+ // myPort = new Serial(this, portName, 9600);
    
   // enable depthMap generation 
   
@@ -111,12 +103,8 @@ void draw()
       drawSkeleton(userList[i]);
       float[] coord = getHeadCoord(userList[i]);
       
-      if (serialEnabled)
-      {
-        if ((i==0)&&coord[2]>0.5)
-        {//first person
-        sendMessage(MOUSE, int(coord[0]), int(coord[1]));
-        }
+      if (i==0){//first person
+      //sendMessage(MOUSE, int(coord[0]), int(coord[1]));
       }
       
       if (coord[2]>0.5) //if confidence > 0.5
@@ -160,13 +148,7 @@ void draw()
         }    
       } 
     }
-  } 
-
-  //end
-
-
-
-  
+  }    
 }
 
 
@@ -317,6 +299,7 @@ void keyPressed(){
     totalRunTime = totalRunTime + totalRunTimeToDate;
     totalVisits = totalVisits + totalVisitsToDate;
     totalPassers = totalPassers + totalPassersToDate;    
+    println("see: "+str(maxUser1Time));
     maxUser1Time = max(maxUser1Time, maxUser1TimeToDate);
     totalGazeTime = totalGazeTime + totalGazeTimeToDate;
     avgGazeTime = totalGazeTime/totalVisits;
@@ -379,7 +362,7 @@ void keyPressed(){
     println("not all user deleted, something is not right here");
   }
   userMap.clear();
-  timeStampIntParam(logTxt, threshNumPpl);
+  timeStamp();
   println("threshNumPpl is " + str(threshNumPpl));
   println("QUIT? NOOOOOOO :(");
   exit();
@@ -478,17 +461,18 @@ void recordGaze(user target)
   
 }
 
-
+/*
 void serialEvent(Serial p){
   //handle incoming data
-  String inString = myPort.readStringUntil('\n');
+ // String inString = myPort.readStringUntil('\n');
   if (inString != null){
     println(inString); //echo text string from Arduino
   }
 }
-
+*/
+/*
 void sendMessage(char tag, int valueX, int valueY){
-  if (timerSerialSend.timesUp()){
+  if (millis() - timerStart > 10){
   myPort.write(HEADER);
   myPort.write(tag);
 
@@ -502,9 +486,10 @@ void sendMessage(char tag, int valueX, int valueY){
   myPort.write(d);
   d = (char)(valueY & 0xff);  // lsb
   myPort.write(d);
-  timerSerialSend.restart();
+  timerStart = millis();
   }
+
   
   
   
-}
+}*/

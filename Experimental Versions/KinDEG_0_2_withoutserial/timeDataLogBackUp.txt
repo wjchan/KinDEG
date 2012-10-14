@@ -1,0 +1,13 @@
+TotalVisits	0		
+TotalGazeTime	0		
+AvgGazeTime	0				
+MaxGazeTime	0		
+TotalPresence	0			
+AvgPresence	0		
+maxPresence	0		
+maxRatioGazeP	0		
+RatioGazePres	0		
+AvgRatioGazeP	0		
+TotalRunTime	0		
+TotalPassers	0		
+maxUser1Time	0		

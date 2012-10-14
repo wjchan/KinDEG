@@ -1,39 +1,6 @@
 //statistic stuff
 //onexituser: ratio, duration
-class timer{
-  int endTime;
-  int startTime;
-  
-  timer(){
-    startTime = millis();
-  }
-  
-  timer(int a1){
-   startTime = millis(); 
-   endTime = a1;
-  }
-  
-  void restart(){
-   startTime = millis(); 
-  }
-  
-  void resetEndTime(int newEndTime){
-   endTime = newEndTime; 
-  }
-  
-  boolean timesUp(){
-   if ((millis()- startTime) > endTime){
-     return true;
-   }
-   else{
-     return false;
-   }
-  }
-  
-  
-  
-  
-}
+
 
 class user{
     //details from log
@@ -123,7 +90,23 @@ void drawJoint(int userId, int jointID) {
   PVector convertedJoint = new PVector();
   kinect.convertRealWorldToProjective(joint, convertedJoint);
   ellipse(convertedJoint.x, convertedJoint.y, 5, 5);
- 
+  
+  if (jointID == SimpleOpenNI.SKEL_HEAD){
+    //println("HEAD: x is " + str(convertedJoint.x)); 
+    //println("HEAD: y is " + str(convertedJoint.y)); 
+    
+    headx = convertedJoint.x;
+    heady = convertedJoint.y;
+  }
+  if (jointID == SimpleOpenNI.SKEL_NECK){
+    // println("NECK: x is " + str(convertedJoint.x)); 
+   // println("NECK: y is " + str(convertedJoint.y)); 
+     neckx = convertedJoint.x;
+    necky = convertedJoint.y;
+    //put here because drawjoint(neck) is called after head
+   // println("MID: x is " + str(0.5*(neckx+headx)));
+    // println("MID: y is " + str(0.5*(necky+heady)));  
+  }
 }
 
 
@@ -262,7 +245,7 @@ void mousePressed()
 
 
 //custom function
-void timeStampIntParam(String logName, int parameter){
+void timeStamp(){
   int y = year();
   int mon = month();
   int d = day();
@@ -294,7 +277,7 @@ void timeStampIntParam(String logName, int parameter){
   }
   
   toSave = (y + "-" + mon + "-" + d + "-" + h + "-" + m + "-" + sec) + "-";
-  toSave = toSave + str(parameter);
+  toSave = toSave + str(threshNumPpl);
   lis[newIndex-1] = toSave;
   
   println(toSave);
