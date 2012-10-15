@@ -3,76 +3,82 @@
   Author: Wei Jian Chan
  */
 
-
-//half implemented - timeDataLog (average value for each param)
-//starting implementing maxppl - maxUserList (ie max number of user at a time)
-
 import SimpleOpenNI.*;
 import monclubelec.javacvPro.*;
 import java.awt.*; 
 import processing.serial.*;
 public static final char HEADER = '|';
-public static final char MOUSE  = 'M';
+public static final char MESSAGE  = 'M';
 
 
 Rectangle[] faceRect;
 OpenCV opencv;
 SimpleOpenNI  kinect;
 boolean autoCalib=true;
-int UID;
-float headx, heady, neckx, necky;
-String logName = "log.txt";
-int msElapsed = 0;
+
+
 int counter;
 HashMap userMap = new HashMap();
 int timeThresh = 2000; //2000ms = 2s
 int threshNumPpl=0; //number of people counted using threshold method
-int timeAverage, timeAverageNumPpl, timeAverageTotalTime;
-String timeDataLog = "timeDataLog.txt";
 int maxUserNum = 0;
 HashMap userDurationMap = new HashMap(); //dynamically updating
 ArrayList gazeTimeAr =  new ArrayList(); //update = growing only
 ArrayList presenceAr = new ArrayList();
 ArrayList ratioAr = new ArrayList();
-//Serial myPort;
-int timerStart=millis();
+Serial myPort;
+boolean serialEnabled=false;
+int picCount=0;
+
+//log names
+String timeDataLog = "timeDataLog.txt";
+String logTxt = "log.txt";
+
+
+//timers
+timer timerSerialSend = new timer(10); //10 ms stopwatch
+//timer timerLog = new timer(60000); //1 minute stopwatch
+timer timerLog = new timer(5000); 
+
 
 void setup()
 {
-  kinect = new SimpleOpenNI(this);
   counter = 0;
- // String portName = Serial.list()[0];
-  //println(portName);
- // myPort = new Serial(this, portName, 9600);
-   
-  // enable depthMap generation 
   
+ //serial stuff 
+  if (serialEnabled)
+  {
+    String portName = Serial.list()[0];
+    myPort = new Serial(this, portName, 9600);
+  }
+  
+  //kinect stuff
+  kinect = new SimpleOpenNI(this);
   if(kinect.enableDepth() == false)
   {
-     println("Can't open the depthMap, maybe the camera is not connected!"); 
+     println("Can't open the depthMap, maybe the camera is not connected!");
+     
      exit();
      return;
   }
-  //kinect.enableRGB(640,480, 1);
-   kinect.enableRGB();
-  // enable skeleton generation for all joints
+  kinect.enableRGB();
   kinect.enableUser(SimpleOpenNI.SKEL_PROFILE_ALL);
- // kinect.alternativeViewPointDepthToImage(); 
- 
+  kinect.alternativeViewPointDepthToImage(); 
   background(200,0,0);
-
   stroke(0,0,255);
   strokeWeight(3);
   smooth();
-  
   size(kinect.depthWidth(), kinect.depthHeight()); 
-  kinect.alternativeViewPointDepthToImage();
+
   
    //opencv stuff
   opencv = new OpenCV(this);
   opencv.allocate(kinect.depthWidth(),kinect.depthHeight());
   opencv.cascade("C:/opencv/data/haarcascades/","haarcascade_frontalface_alt.xml"); //select descriptor
-  // frameRate(100);
+  //opencv.cascade("C:/opencv/data/lpbcascades/","lbpcascade_frontalface.xml"); //select descriptor
+
+
+
 }
 
 void draw()
@@ -103,18 +109,20 @@ void draw()
       drawSkeleton(userList[i]);
       float[] coord = getHeadCoord(userList[i]);
       
-      if (i==0){//first person
-      //sendMessage(MOUSE, int(coord[0]), int(coord[1]));
-      }
       
       if (coord[2]>0.5) //if confidence > 0.5
-      {     
+      { 
+        if (serialEnabled)
+        {
+         
+          sendMessage(MESSAGE, int(coord[0]), int(coord[1]));
+        }    
         if (isHeadInRect(coord[0], coord[1], faceRect))//if looking at display
         {  
+           takePic();
            
-           //assuming fps is 30
            if (userMap.containsKey(userList[i])) //unnecessary stuff (safety net)
-           {  //update value
+           {  
              user target = (user)userMap.get(userList[i]);
              if (target.inRect)
              {
@@ -148,7 +156,12 @@ void draw()
         }    
       } 
     }
-  }    
+  } 
+  if (timerLog.timesUp()){
+  logIt(false);
+  timerLog.restart();
+  }
+  //end
 }
 
 
@@ -164,14 +177,24 @@ float[] getHeadCoord(int userId)
   coord[0] = convertedJoint.x;
   coord[1] = convertedJoint.y;
   coord[2] = confidence;
-  //println(coord[0]);
-  //println(coord[1]);
   return coord;
 }
 
 
 void keyPressed(){
+  
+  if (key == 'e'){ //exit
+    logIt(true);
+    println("QUIT? NOOOOOOO :(");
+    exit();
+  } 
+
+}
+
+
+void logIt(boolean last){ //put into log files
   int[] userList = kinect.getUsers();
+  int activeUser=0;
   for (int i = 0; i<userList.length; i++)
   {
     user target = (user)userMap.get(userList[i]);
@@ -181,16 +204,42 @@ void keyPressed(){
       print(target.gazeTime);
       print("\n");
       if (target.gazeTime > timeThresh)
-      {  
-        threshNumPpl++;
-        gazeTimeAr.add(target.gazeTime);
-        presenceAr.add(target.getDuration());
-        ratioAr.add(target.getRatio());
+      { 
+        activeUser++;
+        if (target.counted == false)
+        {
+          threshNumPpl++;
+          target.counted = true;
+        }
+
+        if (target.gazeTimeArIndex == -1){
+          gazeTimeAr.add(target.gazeTime);
+          target.gazeTimeArIndex = gazeTimeAr.size()-1;
+        }
+        else{
+          gazeTimeAr.set(target.gazeTimeArIndex, target.gazeTime);
+        }
+        if (target.presenceArIndex == -1){
+          presenceAr.add(target.getDuration());
+          target.presenceArIndex = presenceAr.size()-1;
+        }
+        else{
+         presenceAr.set(target.presenceArIndex, target.getDuration()); 
+        }
+        if (target.ratioArIndex == -1){
+          ratioAr.add(target.getRatio());
+          target.ratioArIndex = ratioAr.size()-1;
+        }
+        else{
+          ratioAr.set(target.ratioArIndex, target.getRatio());
+        }
       }
+      if (last){
       userMap.remove(userList[i]);
+      }
     }
   }
-  
+  println("activeuser is " +str(activeUser));
   
   
   //LOG STUFF
@@ -231,9 +280,17 @@ void keyPressed(){
     avgPresence = avgPresence/totalVisits;
     maxPresence = int(maxIntAL(presenceAr));
     maxRatioGazeP = maxFloatAL(ratioAr);
-    ratioGazePres = sumFloatAL(ratioAr)/totalVisits;
-    avgRatioGazeP = totalGazeTime/totalVisits;
     totalRatio = sumFloatAL(ratioAr);
+    
+    ratioGazePres= totalRatio;
+    ratioGazePres = ratioGazePres/totalVisits;
+    avgRatioGazeP = totalGazeTime;
+    //println("avgratiogazep is " + str(avgRatioGazeP));
+    avgRatioGazeP = avgRatioGazeP/totalPresence;
+    //println("divided by totalVisits which is " + str(totalPresence));
+    //println("now avgratiogazep is " + str(avgRatioGazeP));
+    
+    
 
   }
   else{
@@ -249,57 +306,103 @@ void keyPressed(){
     totalRatio = 0;
   }
   
+    timeStampIntParam("totalVisitsLog.txt", totalVisits);
+    timeStampIntParam("totalGazeTimeLog.txt", totalGazeTime);
+    timeStampIntParam("totalPresenceLog.txt", totalPresence);
+    timeStampFloatParam("avgPresenceLog.txt", avgPresence);
+    timeStampFloatParam("avgRatioGazePLog.txt", avgRatioGazeP);
+    timeStampFloatParam("ratioGazePresLog.txt", ratioGazePres);
+    timeStampIntParam("totalUserLog.txt", userList.length);
+    timeStampIntParam("engagedVisitorsLog.txt", activeUser);
+  
+  
   //extract stuff
+  if (last){
   
     String timeData[] = loadStrings(timeDataLog);
+    
+    //declare variables
+     int totalVisitsToDate;
+     int totalGazeTimeToDate;
+     float avgGazeTimeToDate;
+     int maxGazeTimeToDate;
+     int totalPresenceToDate;
+     float avgPresenceToDate;
+     int maxPresenceToDate;
+     float maxRatioGazePToDate;
+     float ratioGazePresToDate;
+     float avgRatioGazePToDate;
+     int totalRunTimeToDate;
+     int totalPassersToDate;
+     int maxUser1TimeToDate;
+     float totalRatioToDate;
+    
+    if (timeData != null)
+    {
   
     String[] Els = split(timeData[0], '\t');
-    int totalVisitsToDate = parseInt(Els[1]); //get total visits
+    totalVisitsToDate = parseInt(Els[1]); //get total visits
     
     Els = split(timeData[1], '\t');
-    int totalGazeTimeToDate = parseInt(Els[1]);//get total gaze time
+    totalGazeTimeToDate = parseInt(Els[1]);//get total gaze time
     
     Els = split(timeData[2], '\t');
-    int avgGazeTimeToDate = parseInt(Els[1]);  //get average time
+    avgGazeTimeToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[3], '\t');
-    int maxGazeTimeToDate = parseInt(Els[1]);  //get average time
+    maxGazeTimeToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[4], '\t');
-    int totalPresenceToDate = parseInt(Els[1]);  //get average time
+    totalPresenceToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[5], '\t');
-    int avgPresenceToDate = parseInt(Els[1]);  //get average time
+    avgPresenceToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[6], '\t');
-    int maxPresenceToDate = parseInt(Els[1]);  //get average time
+    maxPresenceToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[7], '\t');
-    float maxRatioGazePToDate = parseFloat(Els[1]);  //get average time
+    maxRatioGazePToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[8], '\t');
-    float ratioGazePresToDate = parseFloat(Els[1]);  //get average time
+    ratioGazePresToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[9], '\t');
-    float avgRatioGazePToDate = parseFloat(Els[1]);  //get average time
+    avgRatioGazePToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[10], '\t');
-    int totalRunTimeToDate = parseInt(Els[1]);  //get average time
+    totalRunTimeToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[11], '\t');
-    int totalPassersToDate = parseInt(Els[1]);  //get average time
+    totalPassersToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[12], '\t');
-    int maxUser1TimeToDate = parseInt(Els[1]);  //get average time
+    maxUser1TimeToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[12], '\t');
-    float totalRatioToDate = parseFloat(Els[1]);  //get average time
+    totalRatioToDate = parseFloat(Els[1]);  //get average time
+    }
+    else
+    {
+         totalVisitsToDate=0;
+         totalGazeTimeToDate=0;
+         avgGazeTimeToDate=0;
+         maxGazeTimeToDate =0;
+         totalPresenceToDate = 0;
+         avgPresenceToDate =0;
+         maxPresenceToDate = 0;
+         maxRatioGazePToDate=0;
+         ratioGazePresToDate=0;
+         avgRatioGazePToDate=0;
+         totalRunTimeToDate=0;
+         totalPassersToDate =0;
+         maxUser1TimeToDate=0;
+         totalRatioToDate=0;
+    }
   
-  //
     totalRunTime = totalRunTime + totalRunTimeToDate;
     totalVisits = totalVisits + totalVisitsToDate;
     totalPassers = totalPassers + totalPassersToDate;    
-    println("see: "+str(maxUser1Time));
     maxUser1Time = max(maxUser1Time, maxUser1TimeToDate);
     totalGazeTime = totalGazeTime + totalGazeTimeToDate;
     avgGazeTime = totalGazeTime/totalVisits;
@@ -351,54 +454,17 @@ void keyPressed(){
   statData[13] = a1;
   
   saveStrings(timeDataLog, statData);
-  
-  
-  
-  
-  
-  ///////////////////////////////////////////////
   if (userMap.isEmpty() == false)
   {
     println("not all user deleted, something is not right here");
   }
   userMap.clear();
-  timeStamp();
-  println("threshNumPpl is " + str(threshNumPpl));
-  println("QUIT? NOOOOOOO :(");
-  exit();
+
+  }
+
+  ///////////////////////////////////////////////
+  
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 void readTimeDate(){
@@ -443,36 +509,21 @@ void readTimeDate(){
   
   Els = split(timeData[12], '\t');
   int maxUser1TimeToDate = parseInt(Els[1]);  //get average time
-  
-  
   //sadsdf
-  
-  
-}
-
-void timeDataInc(int userGazeTime){
-  
-  
-}
-
-
-void recordGaze(user target)
-{
-  
 }
 
 /*
 void serialEvent(Serial p){
   //handle incoming data
- // String inString = myPort.readStringUntil('\n');
+  String inString = myPort.readStringUntil('\n');
   if (inString != null){
     println(inString); //echo text string from Arduino
   }
 }
 */
-/*
+
 void sendMessage(char tag, int valueX, int valueY){
-  if (millis() - timerStart > 10){
+  if (timerSerialSend.timesUp()){
   myPort.write(HEADER);
   myPort.write(tag);
 
@@ -486,10 +537,9 @@ void sendMessage(char tag, int valueX, int valueY){
   myPort.write(d);
   d = (char)(valueY & 0xff);  // lsb
   myPort.write(d);
-  timerStart = millis();
+  timerSerialSend.restart();
   }
-
   
   
   
-}*/
+}

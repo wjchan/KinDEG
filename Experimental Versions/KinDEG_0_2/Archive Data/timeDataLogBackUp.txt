@@ -10,4 +10,6 @@ RatioGazePres	0
 AvgRatioGazeP	0		
 TotalRunTime	0		
 TotalPassers	0		
-maxUser1Time	0		
+maxUser1Time	0
+totalRatio	0
+		

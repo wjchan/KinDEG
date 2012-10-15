@@ -6,7 +6,7 @@
 #include <Servo.h> 
 
 #define HEADER        '|'
-#define MOUSE         'M'
+#define MESSAGE         'M'
 #define MESSAGE_BYTES  6  // the total bytes in a message
 
  
@@ -15,13 +15,14 @@ Servo myservo, myservo2, myservo3, myservo4;  // create servo object to control 
 int angle, prevAngle;
 int val;
 int pos = 0;    // variable to store the servo position 
+int startTimer = millis();
  
  
 void setup() 
 { 
   Serial.begin(9600);
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object 
-  myservo.write(20); //default angle
+  //myservo.write(20); //default angle
   myservo2.attach(10);
   myservo3.attach(11);
   myservo4.attach(6);
@@ -37,7 +38,7 @@ void loop()
     {
       char tag = Serial.read();
       
-      if(tag == MOUSE)
+      if(tag == MESSAGE)
       {
         valX = Serial.read()*256; // this was sent as a char
         valX = valX + Serial.read();
@@ -61,13 +62,17 @@ void loop()
        if (valX > 640){
         angle= prevAngle;
       }
+      float angle2 = map(valY, 0, 480,70 , 180);
+    
+      
         myservo.write(int(angle));
         myservo3.write(int(angle));
-        float angle2 = map(valY, 0, 480,0 , 140);
+      
         myservo2.write(int(angle2));
         myservo4.write(int(angle2));
-        slowSweep(prevAngle, angle);
+        //slowSweep(prevAngle, angle);
          prevAngle = angle;
+         startTimer = millis();
 
     
     
@@ -113,7 +118,18 @@ void loop()
      
     }
   }
+  /*
+  else{
+    if ((millis()-startTimer)>10000){
+      myservo.write(0);
+        myservo3.write(180);
+        myservo2.write(70);
+        myservo4.write(70);
+        startTimer=millis();
+    }
     
+  }
+   */ 
     
      /*
    

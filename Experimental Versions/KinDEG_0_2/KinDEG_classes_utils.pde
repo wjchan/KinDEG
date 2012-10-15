@@ -41,15 +41,23 @@ class user{
    int gazeTime;
    int startGaze;
    boolean inRect;
+   boolean counted;
    int enterTime;
+   int gazeTimeArIndex;
+   int presenceArIndex;
+   int ratioArIndex;
    
    user(){
      id = 0;
      gazeTime = 0;
      startGaze = millis();
-     
+     counted = false;
      inRect = false;
      enterTime = millis();
+     
+     gazeTimeArIndex = -1;
+     presenceArIndex = -1;
+     ratioArIndex = -1;
    }
    
    user(int a1){
@@ -57,8 +65,12 @@ class user{
      gazeTime = 0;
      startGaze = millis();
      enterTime = millis();
-   
+     counted = false;
      inRect = false;
+     
+     gazeTimeArIndex = -1;
+     presenceArIndex = -1;
+     ratioArIndex = -1;
    }
    
    float getRatio(){
@@ -177,14 +189,35 @@ void onLostUser(int userId)
    println(target.getRatio());
    println(target.getDuration());
    //threshold gazetime stuff
-  if (target.gazeTime > timeThresh)
-  {
-    threshNumPpl++;
-    gazeTimeAr.add(target.gazeTime);
-    presenceAr.add(target.getDuration());
-    ratioAr.add(target.getRatio());
-    
-  }
+ if (target.gazeTime > timeThresh)
+      { 
+        if (target.counted == false)
+        {
+          threshNumPpl++;
+          target.counted = true;
+        }
+        if (target.gazeTimeArIndex == -1){
+          gazeTimeAr.add(target.gazeTime);
+          target.gazeTimeArIndex = gazeTimeAr.size()-1;
+        }
+        else{
+          gazeTimeAr.set(target.gazeTimeArIndex,target.gazeTime);
+        }
+        if (target.presenceArIndex == -1){
+          presenceAr.add(target.getDuration());
+          target.presenceArIndex = presenceAr.size()-1;
+        }
+        else{
+         presenceAr.set(target.presenceArIndex,target.getDuration()); 
+        }
+        if (target.ratioArIndex == -1){
+          ratioAr.add(target.getRatio());
+          target.ratioArIndex = ratioAr.size()-1;
+        }
+        else{
+          ratioAr.set(target.ratioArIndex,target.getRatio());
+        }
+      }
   userMap.remove(userId);
   
   //user duration stuff
@@ -195,13 +228,35 @@ void onExitUser(int userId)
 {
   println("onExitUser - userId: " + userId);
   user target = (user)userMap.get(userId);
-  if (target.gazeTime > timeThresh)
-  {
-    threshNumPpl++;
-    
-    //add some user duration stuff here too
-
-  }
+       if (target.gazeTime > timeThresh)
+      { 
+        if (target.counted == false)
+        {
+          threshNumPpl++;
+          target.counted = true;
+        }
+        if (target.gazeTimeArIndex == -1){
+          gazeTimeAr.add(target.gazeTime);
+          target.gazeTimeArIndex = gazeTimeAr.size()-1;
+        }
+        else{
+          gazeTimeAr.set(target.gazeTimeArIndex,target.gazeTime);
+        }
+        if (target.presenceArIndex == -1){
+          presenceAr.add(target.getDuration());
+          target.presenceArIndex = presenceAr.size()-1;
+        }
+        else{
+         presenceAr.set(target.presenceArIndex,target.getDuration()); 
+        }
+        if (target.ratioArIndex == -1){
+          ratioAr.add(target.getRatio());
+          target.ratioArIndex = ratioAr.size()-1;
+        }
+        else{
+          ratioAr.set(target.ratioArIndex,target.getRatio());
+        }
+      }
   userMap.remove(userId);
   
   //user duration stuff
@@ -301,6 +356,84 @@ void timeStampIntParam(String logName, int parameter){
   saveStrings(logName, lis);
 }
 
+void timeStampFloatParam(String logName, float parameter){
+  int y = year();
+  int mon = month();
+  int d = day();
+  int h = hour();
+  int m = minute();
+  int sec = second();
+
+  //declaration without initialization
+  String toSave;
+  String[] lis;
+  int newIndex;
+  
+  
+  //rewrite what is already there
+  String liness[] = loadStrings(logName);
+  
+  
+  if (liness != null){
+    newIndex = liness.length + 1;
+    lis = new String[newIndex];
+    
+    for (int i =0 ; i < liness.length; i++) {
+      lis[i] = liness[i];
+    }
+  }
+  else{
+    newIndex = 1;
+    lis = new String[newIndex];
+  }
+  
+  toSave = (y + "-" + mon + "-" + d + "-" + h + "-" + m + "-" + sec) + "-";
+  toSave = toSave + str(parameter);
+  lis[newIndex-1] = toSave;
+  
+  println(toSave);
+  saveStrings(logName, lis);
+}
+
+void freqTimeStamp(String logName, int visits, float ratio){
+  int y = year();
+  int mon = month();
+  int d = day();
+  int h = hour();
+  int m = minute();
+  int sec = second();
+
+  //declaration without initialization
+  String toSave;
+  String[] lis;
+  int newIndex;
+  
+  
+  //rewrite what is already there
+  String liness[] = loadStrings(logName);
+  
+  
+  if (liness != null){
+    newIndex = liness.length + 1;
+    lis = new String[newIndex];
+    
+    for (int i =0 ; i < liness.length; i++) {
+      lis[i] = liness[i];
+    }
+  }
+  else{
+    newIndex = 1;
+    lis = new String[newIndex];
+  }
+  
+  toSave = (y + "-" + mon + "-" + d + "-" + h + "-" + m + "-" + sec) + "-";
+  toSave = toSave + str(visits) + "-" + str(ratio);
+  lis[newIndex-1] = toSave;
+  
+  println(toSave);
+  saveStrings(logName, lis);
+}
+
 
 
 
@@ -369,6 +502,61 @@ float maxIntAL(ArrayList lis) //sum up all elements of float arrayList
     }
   }
   return maxNum;
+}
+
+
+//ArrayList gazeTimeAr =  new ArrayList(); //update = growing only
+//ArrayList presenceAr = new ArrayList();
+//ArrayList ratioAr = new ArrayList();
+
+int sumGazeTime(){
+  int[] uList = kinect.getUsers();
+  int sum = 0;
+ for  (int i = 0; i<uList.length; i++){
+   if (kinect.isTrackingSkeleton(uList[i])){
+     user target = (user)userMap.get(uList[i]);
+     if (target != null)
+       sum = sum + target.gazeTime;
+   }
+ }
+  return sum;
+}
+
+float sumRatio(){
+ int[] uList = kinect.getUsers();
+ float sum = 0;
+ for  (int i = 0; i<uList.length; i++){
+   if (kinect.isTrackingSkeleton(uList[i])){
+   user target = (user)userMap.get(uList[i]);
+   if (target != null)
+   sum = sum + target.getRatio();
+   }
+ }
+ return sum;
+  
+}
+
+int sumPresence(){
+    int[] uList = kinect.getUsers();
+  int sum = 0;
+ for  (int i = 0; i<uList.length; i++){
+    if (kinect.isTrackingSkeleton(uList[i])){
+     user target = (user)userMap.get(uList[i]);
+     if (target != null)
+     sum = sum + target.getDuration();
+    }
+ }
+ if (sum == 0){
+   return 1; //avoid division by 0, total ratio should be 0 when sum == 0
+ }
+  return sum;
+  
+}
+
+float avgRatioByPresence(){
+  float avgRatio = sumGazeTime();
+  avgRatio = avgRatio/sumPresence();
+  return avgRatio;
 }
 
 

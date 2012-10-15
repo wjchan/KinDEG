@@ -8,17 +8,15 @@ import monclubelec.javacvPro.*;
 import java.awt.*; 
 import processing.serial.*;
 public static final char HEADER = '|';
-public static final char MOUSE  = 'M';
+public static final char MESSAGE  = 'M';
 
 
 Rectangle[] faceRect;
 OpenCV opencv;
 SimpleOpenNI  kinect;
 boolean autoCalib=true;
-int UID;
 
 
-int msElapsed = 0;
 int counter;
 HashMap userMap = new HashMap();
 int timeThresh = 2000; //2000ms = 2s
@@ -29,7 +27,7 @@ ArrayList gazeTimeAr =  new ArrayList(); //update = growing only
 ArrayList presenceAr = new ArrayList();
 ArrayList ratioAr = new ArrayList();
 Serial myPort;
-boolean serialEnabled=true;
+boolean serialEnabled=false;
 
 //log names
 String timeDataLog = "timeDataLog.txt";
@@ -38,49 +36,48 @@ String logTxt = "log.txt";
 
 //timers
 timer timerSerialSend = new timer(10); //10 ms stopwatch
-timer timerLog = new timer(60000); //1 minute stopwatch
+//timer timerLog = new timer(60000); //1 minute stopwatch
+timer timerLog = new timer(5000); 
+
 
 void setup()
 {
-  kinect = new SimpleOpenNI(this);
   counter = 0;
+  
+ //serial stuff 
   if (serialEnabled)
   {
     String portName = Serial.list()[0];
     myPort = new Serial(this, portName, 9600);
   }
   
-  //kinect.moveKinect(5);
-  
-   
-  // enable depthMap generation 
-  
+  //kinect stuff
+  kinect = new SimpleOpenNI(this);
   if(kinect.enableDepth() == false)
   {
-     println("Can't open the depthMap, maybe the camera is not connected!"); 
+     println("Can't open the depthMap, maybe the camera is not connected!");
+     
      exit();
      return;
   }
-  //kinect.enableRGB(640,480, 1);
-   kinect.enableRGB();
-  // enable skeleton generation for all joints
+  kinect.enableRGB();
   kinect.enableUser(SimpleOpenNI.SKEL_PROFILE_ALL);
- // kinect.alternativeViewPointDepthToImage(); 
- 
+  kinect.alternativeViewPointDepthToImage(); 
   background(200,0,0);
-
   stroke(0,0,255);
   strokeWeight(3);
   smooth();
-  
   size(kinect.depthWidth(), kinect.depthHeight()); 
-  kinect.alternativeViewPointDepthToImage();
+
   
    //opencv stuff
   opencv = new OpenCV(this);
   opencv.allocate(kinect.depthWidth(),kinect.depthHeight());
   opencv.cascade("C:/opencv/data/haarcascades/","haarcascade_frontalface_alt.xml"); //select descriptor
-  // frameRate(100);
+  //opencv.cascade("C:/opencv/data/lpbcascades/","lbpcascade_frontalface.xml"); //select descriptor
+
+
+
 }
 
 void draw()
@@ -111,16 +108,13 @@ void draw()
       drawSkeleton(userList[i]);
       float[] coord = getHeadCoord(userList[i]);
       
-      if (serialEnabled)
-      {
-        if ((i==0)&&coord[2]>0.5)
-        {//first person
-        sendMessage(MOUSE, int(coord[0]), int(coord[1]));
-        }
-      }
       
       if (coord[2]>0.5) //if confidence > 0.5
-      {     
+      { 
+        if (serialEnabled)
+        {
+          sendMessage(MESSAGE, int(coord[0]), int(coord[1]));
+        }    
         if (isHeadInRect(coord[0], coord[1], faceRect))//if looking at display
         {  
            
@@ -161,6 +155,11 @@ void draw()
       } 
     }
   } 
+  if (timerLog.timesUp()){
+  logIt(false);
+  timerLog.restart();
+  }
+
 
   //end
 
@@ -189,6 +188,17 @@ float[] getHeadCoord(int userId)
 
 
 void keyPressed(){
+  
+  if (key == 'e'){
+    logIt(true);
+    println("QUIT? NOOOOOOO :(");
+    exit();
+  } 
+
+}
+
+
+void logIt(boolean last){
   int[] userList = kinect.getUsers();
   for (int i = 0; i<userList.length; i++)
   {
@@ -199,13 +209,37 @@ void keyPressed(){
       print(target.gazeTime);
       print("\n");
       if (target.gazeTime > timeThresh)
-      {  
-        threshNumPpl++;
-        gazeTimeAr.add(target.gazeTime);
-        presenceAr.add(target.getDuration());
-        ratioAr.add(target.getRatio());
+      { 
+        if (target.counted == false)
+        {
+          threshNumPpl++;
+          target.counted = true;
+        }
+        if (target.gazeTimeArIndex == -1){
+          gazeTimeAr.add(target.gazeTime);
+          target.gazeTimeArIndex = gazeTimeAr.size()-1;
+        }
+        else{
+          gazeTimeAr.set(target.gazeTimeArIndex, target.gazeTime);
+        }
+        if (target.presenceArIndex == -1){
+          presenceAr.add(target.getDuration());
+          target.presenceArIndex = presenceAr.size()-1;
+        }
+        else{
+         presenceAr.set(target.presenceArIndex, target.getDuration()); 
+        }
+        if (target.ratioArIndex == -1){
+          ratioAr.add(target.getRatio());
+          target.ratioArIndex = ratioAr.size()-1;
+        }
+        else{
+          ratioAr.set(target.ratioArIndex, target.getRatio());
+        }
       }
+      if (last){
       userMap.remove(userList[i]);
+      }
     }
   }
   
@@ -267,51 +301,95 @@ void keyPressed(){
     totalRatio = 0;
   }
   
+    timeStampIntParam("totalVisitsLog.txt", totalVisits);
+  timeStampIntParam("totalGazeTimeLog.txt", totalGazeTime);
+    timeStampIntParam("totalPresenceLog.txt", totalPresence);
+    timeStampFloatParam("avgPresenceLog.txt", avgPresence);
+    timeStampFloatParam("avgRatioGazePLog.txt", avgRatioGazeP);
+    timeStampFloatParam("ratioGazePresLog.txt", ratioGazePres);
+  
+  
   //extract stuff
+  if (last){
   
     String timeData[] = loadStrings(timeDataLog);
+    
+    //declare variables
+       int totalVisitsToDate;
+       int totalGazeTimeToDate;
+       float avgGazeTimeToDate;
+       int maxGazeTimeToDate;
+       int totalPresenceToDate;
+       float avgPresenceToDate;
+       int maxPresenceToDate;
+       float maxRatioGazePToDate;
+       float ratioGazePresToDate;
+       float avgRatioGazePToDate;
+       int totalRunTimeToDate;
+       int totalPassersToDate;
+       int maxUser1TimeToDate;
+       float totalRatioToDate;
+    
+    if (timeData != null){
   
     String[] Els = split(timeData[0], '\t');
-    int totalVisitsToDate = parseInt(Els[1]); //get total visits
+    totalVisitsToDate = parseInt(Els[1]); //get total visits
     
     Els = split(timeData[1], '\t');
-    int totalGazeTimeToDate = parseInt(Els[1]);//get total gaze time
+    totalGazeTimeToDate = parseInt(Els[1]);//get total gaze time
     
     Els = split(timeData[2], '\t');
-    int avgGazeTimeToDate = parseInt(Els[1]);  //get average time
+    avgGazeTimeToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[3], '\t');
-    int maxGazeTimeToDate = parseInt(Els[1]);  //get average time
+    maxGazeTimeToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[4], '\t');
-    int totalPresenceToDate = parseInt(Els[1]);  //get average time
+    totalPresenceToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[5], '\t');
-    int avgPresenceToDate = parseInt(Els[1]);  //get average time
+    avgPresenceToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[6], '\t');
-    int maxPresenceToDate = parseInt(Els[1]);  //get average time
+    maxPresenceToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[7], '\t');
-    float maxRatioGazePToDate = parseFloat(Els[1]);  //get average time
+    maxRatioGazePToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[8], '\t');
-    float ratioGazePresToDate = parseFloat(Els[1]);  //get average time
+    ratioGazePresToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[9], '\t');
-    float avgRatioGazePToDate = parseFloat(Els[1]);  //get average time
+    avgRatioGazePToDate = parseFloat(Els[1]);  //get average time
     
     Els = split(timeData[10], '\t');
-    int totalRunTimeToDate = parseInt(Els[1]);  //get average time
+    totalRunTimeToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[11], '\t');
-    int totalPassersToDate = parseInt(Els[1]);  //get average time
+    totalPassersToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[12], '\t');
-    int maxUser1TimeToDate = parseInt(Els[1]);  //get average time
+    maxUser1TimeToDate = parseInt(Els[1]);  //get average time
     
     Els = split(timeData[12], '\t');
-    float totalRatioToDate = parseFloat(Els[1]);  //get average time
+    totalRatioToDate = parseFloat(Els[1]);  //get average time
+    }
+    else{
+      totalVisitsToDate=0;
+       totalGazeTimeToDate=0;
+       avgGazeTimeToDate=0;
+       maxGazeTimeToDate =0;
+       totalPresenceToDate = 0;
+       avgPresenceToDate =0;
+       maxPresenceToDate = 0;
+       maxRatioGazePToDate=0;
+       ratioGazePresToDate=0;
+       avgRatioGazePToDate=0;
+       totalRunTimeToDate=0;
+       totalPassersToDate =0;
+       maxUser1TimeToDate=0;
+       totalRatioToDate=0;
+    }
   
   //
     totalRunTime = totalRunTime + totalRunTimeToDate;
@@ -368,6 +446,7 @@ void keyPressed(){
   statData[13] = a1;
   
   saveStrings(timeDataLog, statData);
+  }
   
   
   
@@ -379,12 +458,19 @@ void keyPressed(){
     println("not all user deleted, something is not right here");
   }
   userMap.clear();
-  timeStampIntParam(logTxt, threshNumPpl);
-  println("threshNumPpl is " + str(threshNumPpl));
-  println("QUIT? NOOOOOOO :(");
-  exit();
-}
+  
+  
+  
+  
+   
+  
+  
 
+
+
+
+  
+}
 
 
 

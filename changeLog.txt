@@ -17,3 +17,11 @@ v0.2 #8-10-2012
 -Only visitors that gazed exceeding a threshold amount of time is counted
 -Head position is used for tracking purposes instead of centre of mass
 -Gaze estimation implemented using a combination of JavaCVPro face detection and head joint position
+
+v0.3 #15-10-2012
+
+-graph plotting based on engaged users and total users
+-Serial can be enabled or disabled
+-Added Arduino sketch for animatronic eyes
+-Better statistics parameter extraction
+-More loggings

@@ -28,7 +28,7 @@ class timeEl{
    int h;
    int m;
    int sec;
-   int pplNum;
+   float pplNum;
    
    //index in axis
    int index;
@@ -43,7 +43,7 @@ class timeEl{
      pplNum=0;
    }
    
-   timeEl(int a1, int a2, int a3, int a4, int a5, int a6, int a7){
+   timeEl(int a1, int a2, int a3, int a4, int a5, int a6, float a7){
      y=a1;
      mon=a2;
      d=a3;
@@ -72,14 +72,14 @@ class timeEl{
    int gety(){
      return y;
    }
-   int getPplNum(){
+   float getPplNum(){
      return pplNum;
    }
 }
 
 void draw(){
   //data generator
-  String log2lines[] = loadStrings("log.txt");
+  String log2lines[] = loadStrings("C:/Users/Wei Jian/Documents/GitHub/KinDEG/Experimental Versions/KinDEG_0_2/ratioGazePresLog.txt");
   println("there are " + log2lines.length + " lines");
   ArrayList dateList=new ArrayList();
   ArrayList xaxis = new ArrayList();
@@ -98,13 +98,13 @@ void draw(){
       int h =  parseInt(Els[3]);
       int m =  parseInt(Els[4]);
       int sec =  parseInt(Els[5]);
-      int pplNum = parseInt(Els[6]);
+      float pplNum = parseFloat(Els[6]);
       timeEl date = new timeEl(y,mon,d,h,m,sec,pplNum); 
       dateList.add(date); 
   }
   
   timeEl temp;
-  int tempInt;
+  float tempInt;
   //classify by year
   switch(choice){
     case 'y': //sort by year
@@ -127,7 +127,7 @@ void draw(){
           temp = (timeEl)dateList.get(i);
           int ind = findIndex(xaxis, temp.y);
           print(ind);
-          tempInt = (Integer)yaxis.get(ind);
+          tempInt = (Float)yaxis.get(ind);
 
           yaxis.set(ind,tempInt + temp.pplNum);
          
@@ -171,7 +171,7 @@ void draw(){
 
             
             
-            tempInt = (Integer)yaxis.get(token);
+            tempInt = (Float)yaxis.get(token);
             yaxis.set(token,tempInt + temp.pplNum);
           } 
         }
@@ -194,7 +194,7 @@ void draw(){
             int ind = findIndex(xaxis, temp.h);
  
             
-            tempInt = (Integer)yaxis.get(ind);
+            tempInt = (Float)yaxis.get(ind);
           yaxis.set(ind,tempInt + temp.pplNum);
           }  
         }
@@ -207,10 +207,10 @@ void draw(){
   }
   
   printIntArray(xaxis);
-  printIntArray(yaxis);
+ // printIntArray(yaxis);
   
   int[] arrx = intArrayList2Array(xaxis);
-  int[] arry = intArrayList2Array(yaxis);
+  float[] arry = floatArrayList2Array(yaxis);
 
   
   
@@ -269,7 +269,7 @@ void draw(){
       fill(0);
       ellipse(x, y, 8, 8);
       
-      int labelVal = arry[i];
+      float labelVal = arry[i];
       Label label = new Label("" + labelVal, x, y);
       if (choice != 'd'){
         Label label2 = new Label(str(arrx[i]),x,y-30);
@@ -364,5 +364,14 @@ int[] intArrayList2Array(ArrayList lis){
   }
   return arr;
 }
+
+float[] floatArrayList2Array(ArrayList lis){
+  float[] arr = new float[lis.size()];
+  for (int i =0; i<lis.size(); i++){
+    arr[i] = (Float)lis.get(i);
+  }
+  return arr;
+}
+
 
 

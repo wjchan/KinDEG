@@ -1,0 +1,14 @@
+TotalVisits	5
+TotalGazeTime	196616
+AvgGazeTime	39323.0
+MaxGazeTime	64767
+TotalPresence	331975
+AvgPresence	66395.0
+MaxPresence	90705
+MaxRatioGazeP	0.76312286
+RatioGazePres	1.3775148
+AvgRatioGazeP	0.5922615
+TotalRunTime	307191
+TotalPassers	11
+maxUser1Time	5
+totalRatio	6.887574
