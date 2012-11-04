@@ -25,3 +25,8 @@ v0.3 #15-10-2012
 -Added Arduino sketch for animatronic eyes
 -Better statistics parameter extraction
 -More loggings
+
+v1.0 #4-11-2012
+-more bug fixes
+-better documentation and code commented
+-screenshots feature added
